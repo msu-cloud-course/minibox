@@ -1,0 +1,65 @@
+# MiniBox: nginx, the PHP app (PHP-FPM), a PostgreSQL database and Adminer.
+#   docker compose up --build   ->   app: http://localhost:8080   adminer: http://localhost:8081
+services:
+  # nginx: the web server. Serves public/ (css) and sends PHP requests to "app".
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "${APP_HOST_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/html/public:ro
+    depends_on:
+      - app
+
+  # The PHP code, run by PHP-FPM on port 9000 (reachable only inside Docker).
+  app:
+    build: .
+    # Rebuild the image on every "docker compose up", so code changes are always included.
+    pull_policy: build
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: minibox
+      DB_USER: minibox
+      DB_PASSWORD: secret
+      UPLOAD_DIR: storage/uploads
+      MAX_UPLOAD_MB: "10"
+      APP_DEBUG: ${APP_DEBUG:-false}
+    volumes:
+      # Uploaded files are saved in storage/uploads of this project folder on your computer.
+      - ${UPLOAD_HOST_DIR:-./storage/uploads}:/var/www/html/storage/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: minibox
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: minibox
+    ports:
+      # Published so you can connect with psql or a desktop client.
+      - "${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U minibox -d minibox"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # Adminer: a web UI for the database.
+  # System: PostgreSQL · Server: db · Username: minibox · Password: secret · Database: minibox
+  adminer:
+    image: adminer:5
+    ports:
+      - "${ADMINER_HOST_PORT:-8081}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db
+
+volumes:
+  dbdata:
