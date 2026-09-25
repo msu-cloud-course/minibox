@@ -27,7 +27,7 @@
   <div class="upload-icon"><?= $view->icon('upload') ?></div>
   <div class="upload-body">
     <h2>Upload a file</h2>
-    <p class="muted">Any file type, up to <?= (int) $maxUploadMb ?> MB.</p>
+    <p class="muted">Any file type, up to <?= (int) $maxUploadMb ?> MB!</p>
 
     <div class="upload-fields">
       <div class="field">
