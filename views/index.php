@@ -9,7 +9,7 @@
  */
 ?>
 <section class="hero">
-  <h1>Мои файлы</h1>
+  <h1>My files</h1>
   <p class="lead">
     <?= $totals['count'] ?> <?= $totals['count'] === 1 ? 'file' : 'files' ?>
     · <?= $view->e($view->bytes($totals['bytes'])) ?> in total
